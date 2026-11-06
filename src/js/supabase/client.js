@@ -27,7 +27,7 @@ async function verificarAcessoDoUtilizador() {
 
   if (hoje > dataVencimento || cliente.status === 'bloqueado') {
     alert('A sua assinatura expirou. Por favor, renove o acesso.');
-    window.location.href = '?page=vendas';
+    window.location.href = 'index.html';
     return null;
   }
 
