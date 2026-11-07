@@ -1,1 +1,37 @@
-<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=views/vendas.html"></head><body><script>window.location.href="views/vendas.html";</script></body></html>
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Vídeos 3D SaaS - Crie Vídeos com IA</title>
+  <script>
+    // Restaura a rota correta se vier do 404.html do GitHub Pages
+    (function() {
+      var redirect = new URLSearchParams(window.location.search).get('p');
+      if (redirect) {
+        window.history.replaceState(null, null, redirect);
+      }
+    })();
+  </script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col justify-between">
+  <header class="p-6 flex justify-between items-center max-w-6xl mx-auto w-full">
+    <h1 class="text-xl font-bold text-amber-400">Vídeos 3D SaaS</h1>
+    <div class="space-x-4">
+      <a href="login.html" class="text-slate-300 hover:text-white">Entrar</a>
+      <a href="cadastro.html" class="bg-amber-500 text-black px-4 py-2 rounded-lg font-bold hover:bg-amber-400 transition">Criar Conta</a>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center justify-center text-center p-6 max-w-4xl mx-auto space-y-6">
+    <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Crie Vídeos Virais 3D com Inteligência Artificial</h2>
+    <p class="text-slate-400 text-lg max-w-2xl">Gere roteiros automáticos com o Gemini e renderize vídeos profissionais diretamente no seu navegador, com custo operacional zero.</p>
+    <a href="cadastro.html" class="bg-emerald-500 text-black px-8 py-4 rounded-xl font-bold text-lg hover:bg-emerald-400 transition shadow-lg">Começar Agora</a>
+  </main>
+
+  <footer class="p-6 text-center text-slate-500 text-sm">
+    © 2026 Sistema Automatizado de Vídeos 3D. Todos os direitos reservados.
+  </footer>
+</body>
+</html>

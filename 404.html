@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecionando...</title>
+  <script>
+    (function() {
+      var segmentCount = 1; // 1 porque o site está em github.io/videos3d/
+      var location = window.location;
+      var base = location.protocol + '//' + location.host + '/' + location.pathname.split('/').slice(1, 1 + segmentCount).join('/');
+      var path = location.pathname.slice(base.length) || '/';
+      var search = location.search;
+      var hash = location.hash;
+      location.replace(base + '/?p=' + encodeURIComponent(path + search + hash));
+    })();
+  </script>
+</head>
+<body>
+  <p>A carregar a página...</p>
+</body>
+</html>
