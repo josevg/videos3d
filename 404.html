@@ -5,17 +5,31 @@
   <title>Redirecionando...</title>
   <script>
     (function() {
-      var segmentCount = 1; // 1 porque o site está em github.io/videos3d/
+      // 1 se for josevg.github.io/videos3d/ 
+      // 0 se for josevg.github.io/
+      var segmentCount = 1; 
+      
       var location = window.location;
-      var base = location.protocol + '//' + location.host + '/' + location.pathname.split('/').slice(1, 1 + segmentCount).join('/');
-      var path = location.pathname.slice(base.length) || '/';
+      var pathname = location.pathname;
+      
+      // Separa o caminho (ex: /videos3d/admin.html) e pega apenas o nome do repositório (videos3d)
+      var repo = pathname.split('/')[1];
+      
+      // Monta a URL base (ex: https://josevg.github.io/videos3d)
+      var base = location.protocol + '//' + location.host + '/' + repo;
+      
+      // Pega o resto do caminho removendo o nome do repositório (ex: /admin.html)
+      var path = pathname.replace('/' + repo, '') || '/';
+      
       var search = location.search;
       var hash = location.hash;
+      
+      // Redireciona para o index.html passando o caminho real como parâmetro 'p'
       location.replace(base + '/?p=' + encodeURIComponent(path + search + hash));
     })();
   </script>
 </head>
-<body>
-  <p>A carregar a página...</p>
+<body class="bg-slate-900 text-white flex items-center justify-center h-screen">
+  <p class="text-amber-400 font-bold">A carregar a página correta...</p>
 </body>
 </html>
