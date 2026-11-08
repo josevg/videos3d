@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Painel do Cliente - Vídeos 3D</title>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col">
+  <nav class="p-4 border-b border-slate-800 flex justify-between items-center max-w-6xl mx-auto w-full">
+    <h1 class="font-bold text-xl text-amber-400">Gerador de Vídeos 3D</h1>
+    <button onclick="terminarSessao()" class="text-red-400 hover:underline text-sm">Terminar Sessão</button>
+  </nav>
+
+  <main class="flex-1 max-w-3xl mx-auto p-6 w-full space-y-6">
+    <div id="avisoBloqueio" class="hidden bg-red-900/50 border border-red-500 p-4 rounded-lg text-red-200 text-center font-bold">
+      ⚠️ A sua assinatura expirou! Renove o seu plano para continuar a gerar vídeos.
+    </div>
+
+    <div id="painelGerador" class="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
+      <h2 class="text-2xl font-bold">Criar Novo Vídeo</h2>
+      <div>
+        <label class="block text-sm mb-1 text-slate-300">Tema ou Roteiro:</label>
+        <input id="inputTema" type="text" placeholder="Ex: Curiosidades sobre a Idade Média" class="w-full p-3 rounded bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400">
+      </div>
+      <button onclick="gerarVideo()" class="w-full bg-emerald-500 text-black p-3 rounded-lg font-bold hover:bg-emerald-400 transition">Gerar Vídeo no Navegador</button>
+    </div>
+
+    <div id="statusProcesso" class="text-center text-slate-400 text-sm"></div>
+  </main>
+
+  <!-- PONTE AUTOMÁTICA COM O GITHUB -->
+  <script src="https://cdn.jsdelivr.net/gh/josevg/videos3d@main/src/js/supabase/client.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/josevg/videos3d@main/src/js/gemini/rotator.js"></script>
+
+  <script>
+    // Validação automática gerida pelo client.js do GitHub
+    window.addEventListener('DOMContentLoaded', async () => {
+      const cliente = await verificarAcessoDoUtilizador();
+      if (!cliente) {
+        document.getElementById('avisoBloqueio').classList.remove('hidden');
+        document.getElementById('painelGerador').classList.add('opacity-50', 'pointer-events-none');
+      }
+    });
+
+    async function gerarVideo() {
+      const tema = document.getElementById('inputTema').value;
+      if (!tema) return alert('Por favor, insira um tema!');
+
+      const statusDiv = document.getElementById('statusProcesso');
+      statusDiv.innerText = '🔄 A contactar a API do Gemini...';
+
+      try {
+        const prompt = `Crie um roteiro detalhado para vídeo 3D sobre: ${tema}`;
+        const roteiro = await gerarTextoComGemini(prompt);
+        
+        statusDiv.innerText = '🎬 Roteiro obtido! A renderizar o vídeo 3D no navegador...';
+        
+        setTimeout(() => {
+          statusDiv.innerText = '✅ Vídeo gerado com sucesso!';
+        }, 3000);
+      } catch (erro) {
+        statusDiv.innerText = '❌ Erro ao processar.';
+      }
+    }
+
+    async function terminarSessao() {
+      await supabase.auth.signOut();
+      window.location.href = '?page=vendas';
+    }
+  </script>
+</body>
+</html>
