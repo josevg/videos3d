@@ -21,7 +21,8 @@ async function initFFmpeg() {
 
     // ATENÇÃO: Usando 'core-st' (Single-Threaded) porque o GitHub Pages 
     // bloqueia a versão multi-thread por falta de cabeçalhos COOP/COEP.
-    const baseURL = 'https://unpkg.com/@ffmpeg/core-st@0.12.6/dist/umd';
+    // CORRIGIDO: Trocado unpkg.com por cdn.jsdelivr.net para evitar erro CORS no GitHub Pages
+    const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.12.6/dist/umd';
     
     try {
         await ffmpeg.load({
