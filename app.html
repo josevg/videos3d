@@ -5,6 +5,11 @@
   <base target="_top">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- BIBLIOTECAS OBRIGATÓRIAS DO FFMPEG (Para o renderer.js funcionar) -->
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+  <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+
   <title>Painel do Cliente - Vídeos 3D</title>
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col">
@@ -18,13 +23,15 @@
       ⚠️ A sua assinatura expirou! Renove o seu plano para continuar a gerar vídeos.
     </div>
 
-    <!-- NOVO PAINEL DE CONFIGURAÇÃO DA API -->
-    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
-      <h2 class="text-xl font-bold text-amber-400">Configuração da API Gemini</h2>
+    <!-- 🌟 PAINEL DE CONFIGURAÇÃO DA API GEMINI 🌟 -->
+    <div class="bg-slate-800 p-6 rounded-xl border border-amber-500/50 space-y-4 shadow-lg shadow-amber-500/10">
+      <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2">
+        🔑 Configuração da API Gemini
+      </h2>
       <div>
         <label class="block text-sm mb-1 text-slate-300">Insira a(s) sua(s) Chave(s) de API:</label>
         <input id="inputApiKey" type="password" placeholder="Ex: AIzaSy..., AIzaSy..." class="w-full p-3 rounded bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-400">
-        <p class="text-xs text-slate-400 mt-2">* Se tiver várias chaves, separe-as por vírgula. Elas serão salvas no seu navegador e rotacionadas automaticamente.</p>
+        <p class="text-xs text-slate-400 mt-2">* Se tiver várias chaves, separe-as por vírgula. Elas serão salvas apenas no seu navegador.</p>
       </div>
       <div class="flex items-center gap-4">
         <button onclick="salvarChavesAPI()" class="bg-amber-500 text-black px-6 py-2 rounded-lg font-bold hover:bg-amber-400 transition">Salvar Chave</button>
@@ -32,6 +39,7 @@
       </div>
     </div>
 
+    <!-- PAINEL DO GERADOR -->
     <div id="painelGerador" class="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
       <h2 class="text-2xl font-bold">Criar Novo Vídeo</h2>
       <div>
@@ -41,17 +49,18 @@
       <button onclick="gerarVideo()" class="w-full bg-emerald-500 text-black p-3 rounded-lg font-bold hover:bg-emerald-400 transition">Gerar Vídeo no Navegador</button>
     </div>
 
-    <div id="statusProcesso" class="text-center text-slate-400 text-sm"></div>
+    <div id="statusProcesso" class="text-center text-slate-400 text-sm font-semibold"></div>
   </main>
 
   <!-- PONTE AUTOMÁTICA COM O GITHUB -->
   <script src="https://cdn.jsdelivr.net/gh/josevg/videos3d@main/src/js/supabase/client.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/josevg/videos3d@main/src/js/gemini/rotator.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/josevg/videos3d@main/src/js/ffmpeg/renderer.js"></script>
 
   <script>
-    // Validação automática gerida pelo client.js do GitHub
+    // 1. Carrega a chave API e valida a sessão quando a página abre
     window.addEventListener('DOMContentLoaded', async () => {
-      // 1. Carrega a chave API salva no navegador para o input
+      // Carrega a chave salva no input
       const savedKeys = localStorage.getItem('gemini_api_keys');
       if (savedKeys) {
         try {
@@ -62,7 +71,7 @@
         }
       }
 
-      // 2. Valida o acesso do cliente (Supabase)
+      // Valida o acesso do cliente (Supabase)
       const cliente = await verificarAcessoDoUtilizador();
       if (!cliente) {
         document.getElementById('avisoBloqueio').classList.remove('hidden');
@@ -70,11 +79,9 @@
       }
     });
 
-    // Função para salvar as chaves no localStorage
+    // 2. Salva as chaves no navegador
     function salvarChavesAPI() {
       const inputVal = document.getElementById('inputApiKey').value;
-      
-      // Separa por vírgula, remove espaços em branco e remove itens vazios
       const keysArray = inputVal.split(',').map(k => k.trim()).filter(k => k !== '');
       
       if (keysArray.length === 0) {
@@ -82,40 +89,54 @@
         return;
       }
       
-      // Salva como JSON no localStorage (Formato exato que o rotator.js espera)
       localStorage.setItem('gemini_api_keys', JSON.stringify(keysArray));
       
-      // Mostra mensagem de sucesso
       const msg = document.getElementById('msgSalvo');
       msg.classList.remove('hidden');
       setTimeout(() => msg.classList.add('hidden'), 3000);
     }
 
+    // 3. Gera o vídeo
     async function gerarVideo() {
       const tema = document.getElementById('inputTema').value;
-      if (!tema) return alert('Por favor, insira um tema!');
+      const statusDiv = document.getElementById('statusProcesso');
 
-      // Verificação prévia para garantir que o usuário salvou a chave
+      if (!tema) return alert('Por favor, insira um tema!');
       if (!localStorage.getItem('gemini_api_keys')) {
         return alert('Por favor, configure e salve a sua chave API do Gemini primeiro!');
       }
 
-      const statusDiv = document.getElementById('statusProcesso');
-      statusDiv.innerText = '🔄 A contactar a API do Gemini...';
+      statusDiv.innerText = '🔄 A contactar a API do Gemini para criar o roteiro...';
 
       try {
         const prompt = `Crie um roteiro detalhado para vídeo 3D sobre: ${tema}`;
         const roteiro = await gerarTextoComGemini(prompt);
         
-        console.log("Roteiro gerado:", roteiro); // Para você ver no console
-        statusDiv.innerText = '🎬 Roteiro obtido! A renderizar o vídeo 3D no navegador...';
+        console.log("Roteiro gerado:", roteiro); 
+
+        statusDiv.innerText = '🎬 Roteiro obtido! A preparar ficheiros para o FFmpeg...';
+
+        // ====================================================================
+        // ⚠️ ATENÇÃO: AQUI É ONDE FALTA O SEU CÓDIGO DE RENDERIZAÇÃO 3D E ÁUDIO ⚠️
+        // O renderer.js exige um arquivo de vídeo (videoBlob) e um de áudio (audioBlob).
+        // Como você ainda não me enviou o código que gera o 3D e a voz, 
+        // criei blobs falsos de teste para provar que o FFmpeg funciona. 
+        // Substitua os blobs abaixo pela sua lógica real de geração.
+        // ====================================================================
         
-        setTimeout(() => {
-          statusDiv.innerText = '✅ Vídeo gerado com sucesso!';
-        }, 3000);
+        // Simulação de Blob de Vídeo (Você deve substituir pelo seu Canvas/3D)
+        const videoBlob = new Blob([], { type: 'video/webm' }); 
+        
+        // Simulação de Blob de Áudio (Você deve substituir pelo seu TTS/Voz)
+        const audioBlob = new Blob([], { type: 'audio/wav' }); 
+
+        statusDiv.innerText = '⚙️ Iniciando o motor FFmpeg...';
+
+        // Chama a sua função do renderer.js
+        await renderizarVideoFinal(videoBlob, audioBlob);
+
       } catch (erro) {
         console.error(erro);
-        // Mostra o erro real na tela para facilitar o debug
         statusDiv.innerText = `❌ Erro: ${erro.message}`;
       }
     }
