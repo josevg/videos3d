@@ -6,7 +6,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-    <!-- BIBLIOTECAS OBRIGATÓRIAS DO FFMPEG (Atualizado para jsDelivr para evitar erro CORS) -->
+  <!-- BIBLIOTECAS OBRIGATÓRIAS DO FFMPEG (Atualizado para jsDelivr para evitar erro CORS) -->
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 
@@ -114,7 +114,7 @@
       try {
         const prompt = `Crie um roteiro detalhado para vídeo 3D sobre: ${tema}`;
         
-        // CHAMADA DO GEMINI (Aqui é onde está travando)
+        // CHAMADA DO GEMINI 
         const roteiro = await gerarTextoComGemini(prompt);
         
         console.log("Roteiro gerado com sucesso:", roteiro); 
