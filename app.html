@@ -49,7 +49,8 @@
       <button onclick="gerarVideo()" class="w-full bg-emerald-500 text-black p-3 rounded-lg font-bold hover:bg-emerald-400 transition">Gerar Vídeo no Navegador</button>
     </div>
 
-    <div id="statusProcesso" class="text-center text-slate-400 text-sm font-semibold"></div>
+    <!-- ÁREA DE STATUS / ERROS -->
+    <div id="statusProcesso" class="text-center text-slate-400 text-sm font-semibold p-4 rounded-lg"></div>
   </main>
 
   <!-- PONTE AUTOMÁTICA COM O GITHUB -->
@@ -60,7 +61,6 @@
   <script>
     // 1. Carrega a chave API e valida a sessão quando a página abre
     window.addEventListener('DOMContentLoaded', async () => {
-      // Carrega a chave salva no input
       const savedKeys = localStorage.getItem('gemini_api_keys');
       if (savedKeys) {
         try {
@@ -71,7 +71,6 @@
         }
       }
 
-      // Valida o acesso do cliente (Supabase)
       const cliente = await verificarAcessoDoUtilizador();
       if (!cliente) {
         document.getElementById('avisoBloqueio').classList.remove('hidden');
@@ -101,6 +100,10 @@
       const tema = document.getElementById('inputTema').value;
       const statusDiv = document.getElementById('statusProcesso');
 
+      // Limpa formatações anteriores
+      statusDiv.className = 'text-center text-slate-400 text-sm font-semibold p-4 rounded-lg';
+      statusDiv.innerHTML = '';
+
       if (!tema) return alert('Por favor, insira um tema!');
       if (!localStorage.getItem('gemini_api_keys')) {
         return alert('Por favor, configure e salve a sua chave API do Gemini primeiro!');
@@ -110,34 +113,29 @@
 
       try {
         const prompt = `Crie um roteiro detalhado para vídeo 3D sobre: ${tema}`;
+        
+        // CHAMADA DO GEMINI (Aqui é onde está travando)
         const roteiro = await gerarTextoComGemini(prompt);
         
-        console.log("Roteiro gerado:", roteiro); 
-
-        statusDiv.innerText = '🎬 Roteiro obtido! A preparar ficheiros para o FFmpeg...';
+        console.log("Roteiro gerado com sucesso:", roteiro); 
+        statusDiv.innerHTML = '🎬 Roteiro obtido! A preparar ficheiros para o FFmpeg...';
 
         // ====================================================================
-        // ⚠️ ATENÇÃO: AQUI É ONDE FALTA O SEU CÓDIGO DE RENDERIZAÇÃO 3D E ÁUDIO ⚠️
-        // O renderer.js exige um arquivo de vídeo (videoBlob) e um de áudio (audioBlob).
-        // Como você ainda não me enviou o código que gera o 3D e a voz, 
-        // criei blobs falsos de teste para provar que o FFmpeg funciona. 
-        // Substitua os blobs abaixo pela sua lógica real de geração.
+        // ⚠️ AVISO: Os Blobs abaixo estão vazios. O FFmpeg vai dar erro pois 
+        // não há vídeo nem áudio reais. Substitua pela sua lógica do Canvas 3D.
         // ====================================================================
-        
-        // Simulação de Blob de Vídeo (Você deve substituir pelo seu Canvas/3D)
         const videoBlob = new Blob([], { type: 'video/webm' }); 
-        
-        // Simulação de Blob de Áudio (Você deve substituir pelo seu TTS/Voz)
         const audioBlob = new Blob([], { type: 'audio/wav' }); 
 
-        statusDiv.innerText = '⚙️ Iniciando o motor FFmpeg...';
+        statusDiv.innerHTML = '⚙️ Iniciando o motor FFmpeg...';
 
-        // Chama a sua função do renderer.js
         await renderizarVideoFinal(videoBlob, audioBlob);
 
       } catch (erro) {
-        console.error(erro);
-        statusDiv.innerText = `❌ Erro: ${erro.message}`;
+        // 🚨 EXIBE O ERRO REAL NA TELA EM VERMELHO 🚨
+        console.error("Erro capturado:", erro);
+        statusDiv.className = 'text-center text-red-400 font-bold p-4 bg-red-900/30 border border-red-500 rounded-lg';
+        statusDiv.innerHTML = `❌ Falha no processo: ${erro.message}`;
       }
     }
 
