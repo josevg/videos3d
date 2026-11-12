@@ -6,22 +6,32 @@ let ffmpegInstance = null;
 async function initFFmpeg() {
     if (ffmpegInstance) return ffmpegInstance;
 
+    // Verifica se as bibliotecas do FFmpeg carregaram corretamente no HTML
+    if (typeof FFmpegWASM === 'undefined' || typeof FFmpegUtil === 'undefined') {
+        throw new Error("Bibliotecas do FFmpeg não encontradas. Verifique se os scripts estão no HTML.");
+    }
+
     const { FFmpeg } = FFmpegWASM;
     const { toBlobURL } = FFmpegUtil;
 
     const ffmpeg = new FFmpeg();
     
-    // Atualiza a interface enquanto carrega (a primeira vez pode demorar)
     const statusDiv = document.getElementById('statusProcesso');
     if (statusDiv) statusDiv.innerText = '⚙️ A descarregar e carregar o motor FFmpeg... (Aguarde)';
 
-    // Usamos toBlobURL para evitar problemas de CORS e permitir cache
-    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+    // ATENÇÃO: Usando 'core-st' (Single-Threaded) porque o GitHub Pages 
+    // bloqueia a versão multi-thread por falta de cabeçalhos COOP/COEP.
+    const baseURL = 'https://unpkg.com/@ffmpeg/core-st@0.12.6/dist/umd';
     
-    await ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    });
+    try {
+        await ffmpeg.load({
+            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        });
+    } catch (error) {
+        console.error("Erro ao carregar FFmpeg:", error);
+        throw new Error("Falha ao carregar motor de vídeo. Verifique a sua internet.");
+    }
 
     // Evento para mostrar os logs do FFmpeg no console (útil para depuração)
     ffmpeg.on('log', ({ message }) => {
@@ -42,14 +52,15 @@ async function initFFmpeg() {
 
 /**
  * Junta o vídeo e o áudio e faz o download automático
- * @param {Blob} videoBlob - O vídeo base (gerado pelo Three.js/Canvas)
- * @param {Blob} audioBlob - O áudio da narração (gerado pela API TTS)
  */
 async function renderizarVideoFinal(videoBlob, audioBlob) {
     const statusDiv = document.getElementById('statusProcesso');
 
     try {
         const ffmpeg = await initFFmpeg();
+        
+        // AQUI ESTAVA O ERRO: O fetchFile precisa ser importado dentro da função ou globalmente
+        const { fetchFile } = FFmpegUtil; 
 
         if (statusDiv) statusDiv.innerText = '📦 A preparar ficheiros no navegador...';
 
@@ -68,16 +79,15 @@ async function renderizarVideoFinal(videoBlob, audioBlob) {
         if (statusDiv) statusDiv.innerText = '🎬 A renderizar o vídeo final...';
 
         // 2. Comando FFmpeg para juntar vídeo e áudio
-        // Nota: Se o seu vídeo base for WebM (do MediaRecorder), precisamos converter para MP4 (libx264)
         await ffmpeg.exec([
             '-i', videoName,
             '-i', audioName,
             '-c:v', 'libx264', // Re-codifica o vídeo para garantir compatibilidade total com MP4
             '-c:a', 'aac',     // Codifica o áudio em AAC
-            '-map', '0:v:0',   // Pega o vídeo da primeira entrada (input_video)
-            '-map', '1:a:0',   // Pega o áudio da segunda entrada (input_audio)
-            '-shortest',       // Termina o vídeo quando o áudio ou o vídeo terminar (o que for menor)
-            '-y',              // Sobrescreve se o arquivo já existir
+            '-map', '0:v:0',   // Pega o vídeo da primeira entrada
+            '-map', '1:a:0',   // Pega o áudio da segunda entrada
+            '-shortest',       // Termina quando o menor arquivo terminar
+            '-y',              // Sobrescreve se existir
             outputName
         ]);
 
@@ -90,12 +100,12 @@ async function renderizarVideoFinal(videoBlob, audioBlob) {
         const videoUrl = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
         const a = document.createElement('a');
         a.href = videoUrl;
-        a.download = `video_3d_${Date.now()}.mp4`; // Nome único com timestamp
+        a.download = `video_3d_${Date.now()}.mp4`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
 
-        // 5. LIMPEZA DE MEMÓRIA (Crucial para não travar o navegador)
+        // 5. LIMPEZA DE MEMÓRIA (Evita que o navegador trave)
         URL.revokeObjectURL(videoUrl);
         await ffmpeg.deleteFile(videoName);
         await ffmpeg.deleteFile(audioName);
@@ -105,6 +115,6 @@ async function renderizarVideoFinal(videoBlob, audioBlob) {
 
     } catch (error) {
         console.error("Erro na renderização:", error);
-        if (statusDiv) statusDiv.innerText = '❌ Erro ao renderizar o vídeo. Verifique a consola (F12).';
+        if (statusDiv) statusDiv.innerText = `❌ Erro: ${error.message || 'Falha ao renderizar'}`;
     }
 }
